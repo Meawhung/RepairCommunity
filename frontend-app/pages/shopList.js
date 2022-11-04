@@ -1,13 +1,36 @@
 import axios from "axios";
-import { useCallback } from "react";
+import { useState } from "react";
 
 const ShopList = ({ shops, error }) => {
-  if (error) {
-    return <div>An error occured: {error.message}</div>;
-  }
+  const [searchText, setSearchText] = useState("");
+  const [tempShops, setTempShops] = useState(shops);
+
+  const getSearchData = async () => {
+    const res = await axios.get(
+      `http://localhost:1337/api/Shops?filters[name][$contains]=${searchText}`
+    );
+    const resShops = res.data.data;
+    setTempShops(resShops);
+  };
+  const handleChange = (event) => {
+    setSearchText(event.target.value);
+  };
+
   return (
     <ul>
-      {shops.data.map((shop) => {
+      <searchBar />
+      <label className="text-session" htmlFor="searchName">
+        <input
+          type="text"
+          name="searchBox"
+          id="searchName"
+          placeholder="Search here"
+          value={searchText}
+          onChange={handleChange}
+        />
+      </label>
+      <button onClick={() => getSearchData()}>Search</button>
+      {tempShops.map((shop) => {
         const id = shop.id;
         const url = `/shop/${id}`;
         return (
@@ -25,7 +48,7 @@ const ShopList = ({ shops, error }) => {
 ShopList.getInitialProps = async (ctx) => {
   try {
     const res = await axios.get("http://localhost:1337/api/Shops/?populate=*");
-    const shops = res.data;
+    const shops = res.data.data;
     return { shops };
   } catch (error) {
     return { error };
